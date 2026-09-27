@@ -10,34 +10,41 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
+@Builder
 @Entity
 @Table(name = "auction_items")
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuctionItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @EqualsAndHashCode.Exclude
+    Long id;
+    String description;
+    String type;
 
-    private String description;
-    private String type;
-
+    @Builder.Default
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Bid> bids = new ArrayList<>();
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    List<Bid> bids = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "successful_bid_id", unique = true)
-    private Bid successfulBid;
-
-    protected AuctionItem() {
-    }
-
-    public AuctionItem(String description, String type) {
-        this.description = description;
-        this.type = type;
-    }
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    Bid successfulBid;
 
     public void addBid(Bid bid) {
         bids.add(bid);
@@ -45,29 +52,9 @@ public class AuctionItem {
     }
 
     public void setSuccessfulBid(Bid bid) {
-        if (bid != null && !bids.contains(bid)) {
+        if (bid != null && bids.stream().noneMatch(existing -> existing == bid)) {
             throw new IllegalArgumentException("The successful bid must belong to this item");
         }
         successfulBid = bid;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public List<Bid> getBids() {
-        return bids;
-    }
-
-    public Bid getSuccessfulBid() {
-        return successfulBid;
     }
 }

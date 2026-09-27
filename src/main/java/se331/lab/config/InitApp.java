@@ -1,9 +1,10 @@
 package se331.lab.config;
 
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import se331.lab.entity.AuctionItem;
 import se331.lab.entity.Bid;
 import se331.lab.repository.AuctionItemRepository;
@@ -12,17 +13,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Component
-public class AuctionDataSeeder implements ApplicationRunner {
-    private final AuctionItemRepository repository;
-
-    public AuctionDataSeeder(AuctionItemRepository repository) {
-        this.repository = repository;
-    }
+@RequiredArgsConstructor
+public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
+    final AuctionItemRepository auctionItemRepository;
 
     @Override
     @Transactional
-    public void run(ApplicationArguments args) {
-        if (repository.count() > 0) {
+    public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+        if (auctionItemRepository.count() > 0) {
             return;
         }
 
@@ -34,14 +32,21 @@ public class AuctionDataSeeder implements ApplicationRunner {
     }
 
     private void createItem(String description, String type, String[] amounts, Integer winnerIndex) {
-        AuctionItem item = new AuctionItem(description, type);
+        AuctionItem item = AuctionItem.builder()
+                .description(description)
+                .type(type)
+                .build();
         LocalDateTime firstBidTime = LocalDateTime.of(2026, 9, 1, 9, 0);
         for (int i = 0; i < amounts.length; i++) {
-            item.addBid(new Bid(new BigDecimal(amounts[i]), firstBidTime.plusHours(i)));
+            item.addBid(Bid.builder()
+                    .amount(new BigDecimal(amounts[i]))
+                    .datetime(firstBidTime.plusHours(i))
+                    .build());
         }
-        repository.saveAndFlush(item);
+        auctionItemRepository.saveAndFlush(item);
         if (winnerIndex != null) {
             item.setSuccessfulBid(item.getBids().get(winnerIndex));
+            auctionItemRepository.save(item);
         }
     }
 }

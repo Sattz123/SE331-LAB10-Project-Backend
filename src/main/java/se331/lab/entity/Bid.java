@@ -9,48 +9,37 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Data
+@Builder
 @Entity
 @Table(name = "bids")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Bid {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @EqualsAndHashCode.Exclude
+    Long id;
 
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal amount;
+    BigDecimal amount;
 
     @Column(nullable = false)
-    private LocalDateTime datetime;
+    LocalDateTime datetime;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "item_id", nullable = false)
-    private AuctionItem item;
-
-    protected Bid() {
-    }
-
-    public Bid(BigDecimal amount, LocalDateTime datetime) {
-        this.amount = amount;
-        this.datetime = datetime;
-    }
-
-    void setItem(AuctionItem item) {
-        this.item = item;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public LocalDateTime getDatetime() {
-        return datetime;
-    }
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    AuctionItem item;
 }
